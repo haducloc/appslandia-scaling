@@ -26,7 +26,7 @@
 		<version.appslandia-common>7.9</version.appslandia-common>
 		<version.rocksdbjni>6.5.3</version.rocksdbjni>
 
-		<version.junit>4.12</version.junit>
+		<version.junit>4.13.1</version.junit>
 	</properties>
 
 	<licenses>
