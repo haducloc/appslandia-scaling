@@ -144,7 +144,6 @@ public class RocksManager implements AutoCloseable {
 
 	public boolean keyMayExist(byte[] key, Holder<byte[]> valueHolder, String columnFamilyName, ReadOptions options) throws RocksDBException {
 		AssertUtils.assertNotNull(key);
-		AssertUtils.assertNotNull(valueHolder);
 
 		columnFamilyName = ValueUtils.valueOrAlt(columnFamilyName, DEFAULT_COLUMN_FAMILY);
 
