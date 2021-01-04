@@ -24,7 +24,7 @@
 		<version.nexus-staging-maven-plugin>1.6.8</version.nexus-staging-maven-plugin>
 
 		<version.appslandia-common>7.9</version.appslandia-common>
-		<version.rocksdbjni>6.5.3</version.rocksdbjni>
+		<version.rocksdbjni>6.14.6</version.rocksdbjni>
 
 		<version.junit>4.12</version.junit>
 	</properties>

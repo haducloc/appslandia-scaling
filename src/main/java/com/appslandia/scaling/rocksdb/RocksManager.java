@@ -31,6 +31,7 @@ import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.DBOptions;
 import org.rocksdb.FlushOptions;
+import org.rocksdb.Holder;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -127,30 +128,30 @@ public class RocksManager implements AutoCloseable {
 		}
 	}
 
-	public boolean keyMayExist(String key, StringBuilder blockCacheValue) throws RocksDBException {
-		return keyMayExist(key, blockCacheValue, null, null);
+	public boolean keyMayExist(String key, Holder<byte[]> valueHolder) throws RocksDBException {
+		return keyMayExist(key, valueHolder, null, null);
 	}
 
-	public boolean keyMayExist(String key, StringBuilder blockCacheValue, String columnFamilyName) throws RocksDBException {
-		return keyMayExist(key, blockCacheValue, columnFamilyName, null);
+	public boolean keyMayExist(String key, Holder<byte[]> valueHolder, String columnFamilyName) throws RocksDBException {
+		return keyMayExist(key, valueHolder, columnFamilyName, null);
 	}
 
-	public boolean keyMayExist(String key, StringBuilder blockCacheValue, String columnFamilyName, ReadOptions options) throws RocksDBException {
+	public boolean keyMayExist(String key, Holder<byte[]> valueHolder, String columnFamilyName, ReadOptions options) throws RocksDBException {
 		AssertUtils.assertNotNull(key);
 
-		return keyMayExist(RocksUtils.marshal(key), blockCacheValue, columnFamilyName, options);
+		return keyMayExist(RocksUtils.marshal(key), valueHolder, columnFamilyName, options);
 	}
 
-	public boolean keyMayExist(byte[] key, StringBuilder blockCacheValue, String columnFamilyName, ReadOptions options) throws RocksDBException {
+	public boolean keyMayExist(byte[] key, Holder<byte[]> valueHolder, String columnFamilyName, ReadOptions options) throws RocksDBException {
 		AssertUtils.assertNotNull(key);
-		AssertUtils.assertNotNull(blockCacheValue);
+		AssertUtils.assertNotNull(valueHolder);
 
 		columnFamilyName = ValueUtils.valueOrAlt(columnFamilyName, DEFAULT_COLUMN_FAMILY);
 
 		if (options == null) {
-			return this.rocksDB.keyMayExist(getHandle(columnFamilyName), key, blockCacheValue);
+			return this.rocksDB.keyMayExist(getHandle(columnFamilyName), key, valueHolder);
 		} else {
-			return this.rocksDB.keyMayExist(options, getHandle(columnFamilyName), key, blockCacheValue);
+			return this.rocksDB.keyMayExist(getHandle(columnFamilyName), options, key, valueHolder);
 		}
 	}
 
@@ -277,29 +278,26 @@ public class RocksManager implements AutoCloseable {
 		return newRocksEntryIterator(keyMarshaller, valueMarshaller, fromKey, null, null, null, null);
 	}
 
-	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey,
-			Function<K, Boolean> toKeyMatcher) {
+	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher) {
 		AssertUtils.assertNotNull(keyMarshaller);
 
 		return newRocksEntryIterator(keyMarshaller, valueMarshaller, fromKey, toKeyMatcher, null, null, null);
 	}
 
-	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher,
-			Function<K, Boolean> keyFilter) {
+	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher, Function<K, Boolean> keyFilter) {
 		AssertUtils.assertNotNull(keyMarshaller);
 
 		return newRocksEntryIterator(keyMarshaller, valueMarshaller, fromKey, toKeyMatcher, keyFilter, null, null);
 	}
 
-	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher,
-			Function<K, Boolean> keyFilter, String columnFamilyName) {
+	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher, Function<K, Boolean> keyFilter, String columnFamilyName) {
 		AssertUtils.assertNotNull(keyMarshaller);
 
 		return newRocksEntryIterator(keyMarshaller, valueMarshaller, fromKey, toKeyMatcher, keyFilter, columnFamilyName, null);
 	}
 
-	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher,
-			Function<K, Boolean> keyFilter, String columnFamilyName, ReadOptions options) {
+	public <K, V> RocksEntryIterator<K, V> newRocksEntryIterator(RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher, Function<K, Boolean> keyFilter, String columnFamilyName,
+			ReadOptions options) {
 		AssertUtils.assertNotNull(keyMarshaller);
 
 		return new RocksEntryIterator<>(newRocksIterator(columnFamilyName, options), keyMarshaller, valueMarshaller, fromKey, toKeyMatcher, keyFilter);
@@ -407,8 +405,7 @@ public class RocksManager implements AutoCloseable {
 
 	// -------------------- Create RocksManager -------------------- //
 
-	public static RocksManager open(String rocksDbDir, DBOptions options, boolean readOnly, List<ColumnFamilyDescriptor> descriptors, RocksCloseable rocksCloseable)
-			throws RocksDBException {
+	public static RocksManager open(String rocksDbDir, DBOptions options, boolean readOnly, List<ColumnFamilyDescriptor> descriptors, RocksCloseable rocksCloseable) throws RocksDBException {
 		AssertUtils.assertNotNull(rocksDbDir);
 		AssertUtils.assertNotNull(options);
 		AssertUtils.assertNotNull(rocksCloseable);
@@ -427,8 +424,7 @@ public class RocksManager implements AutoCloseable {
 		return new RocksManager(rocksDB, handles, rocksCloseable);
 	}
 
-	public static RocksManager openTtl(String rocksDbDir, DBOptions options, boolean readOnly, List<ColumnFamilyDescriptor> descriptors, List<Integer> ttlValues,
-			RocksCloseable rocksCloseable) throws RocksDBException {
+	public static RocksManager openTtl(String rocksDbDir, DBOptions options, boolean readOnly, List<ColumnFamilyDescriptor> descriptors, List<Integer> ttlValues, RocksCloseable rocksCloseable) throws RocksDBException {
 
 		AssertUtils.assertNotNull(rocksDbDir);
 		AssertUtils.assertNotNull(options);
@@ -444,8 +440,7 @@ public class RocksManager implements AutoCloseable {
 		return new RocksManager(rocksDB, handles, rocksCloseable);
 	}
 
-	public static RocksManager openTran(String rocksDbDir, DBOptions options, TransactionDBOptions tranDbOptions, List<ColumnFamilyDescriptor> descriptors,
-			RocksCloseable rocksCloseable) throws RocksDBException {
+	public static RocksManager openTran(String rocksDbDir, DBOptions options, TransactionDBOptions tranDbOptions, List<ColumnFamilyDescriptor> descriptors, RocksCloseable rocksCloseable) throws RocksDBException {
 
 		AssertUtils.assertNotNull(rocksDbDir);
 		AssertUtils.assertNotNull(options);
@@ -461,8 +456,7 @@ public class RocksManager implements AutoCloseable {
 		return new RocksManager(rocksDB, handles, rocksCloseable);
 	}
 
-	public static RocksManager openOptimisticTran(String rocksDbDir, DBOptions options, List<ColumnFamilyDescriptor> descriptors, RocksCloseable rocksCloseable)
-			throws RocksDBException {
+	public static RocksManager openOptimisticTran(String rocksDbDir, DBOptions options, List<ColumnFamilyDescriptor> descriptors, RocksCloseable rocksCloseable) throws RocksDBException {
 		AssertUtils.assertNotNull(rocksDbDir);
 		AssertUtils.assertNotNull(options);
 		AssertUtils.assertNotNull(rocksCloseable);

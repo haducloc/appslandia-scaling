@@ -46,8 +46,7 @@ public class RocksEntryIterator<K, V> implements Iterator<RocksEntry<K, V>>, Aut
 	private boolean _toKeyMatched;
 	private K _key;
 
-	public RocksEntryIterator(RocksIterator rocksIterator, RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher,
-			Function<K, Boolean> keyFilter) {
+	public RocksEntryIterator(RocksIterator rocksIterator, RocksMarshaller<K> keyMarshaller, RocksMarshaller<V> valueMarshaller, K fromKey, Function<K, Boolean> toKeyMatcher, Function<K, Boolean> keyFilter) {
 		this.rocksIterator = AssertUtils.assertNotNull(rocksIterator);
 		this.keyMarshaller = AssertUtils.assertNotNull(keyMarshaller);
 		this.valueMarshaller = valueMarshaller;
