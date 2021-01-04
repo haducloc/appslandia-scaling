@@ -128,6 +128,10 @@ public class RocksManager implements AutoCloseable {
 		}
 	}
 
+	public boolean keyMayExist(String key) throws RocksDBException {
+		return keyMayExist(key, null, null, null);
+	}
+
 	public boolean keyMayExist(String key, Holder<byte[]> valueHolder) throws RocksDBException {
 		return keyMayExist(key, valueHolder, null, null);
 	}
