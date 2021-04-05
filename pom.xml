@@ -23,7 +23,7 @@
 		<version.maven-gpg-plugin>1.6</version.maven-gpg-plugin>
 		<version.nexus-staging-maven-plugin>1.6.8</version.nexus-staging-maven-plugin>
 
-		<version.appslandia-common>7.9</version.appslandia-common>
+		<version.appslandia-common>8.0</version.appslandia-common>
 		<version.rocksdbjni>6.14.6</version.rocksdbjni>
 
 		<version.junit>4.13.1</version.junit>
